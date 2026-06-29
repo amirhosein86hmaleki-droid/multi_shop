@@ -8,8 +8,9 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 
 from .serializers import UserSerializer
-from .models import User, Otp
-from .forms import LoginForm, RegisterForm, CheckOtpForm
+from .models import User, Otp, Address
+from .forms import LoginForm, RegisterForm, CheckOtpForm, AddAddressForm
+
 
 from kavenegar import *
 from random import randint
@@ -124,6 +125,28 @@ class CheckOtpView(View):
         return render(request, 'account/check_otp.html', {'form':form})  
 
 # |================================================================================================|
+                                            # AddAddressView
+class AddAddressView(View):
+    def post(self, request):
+        form = AddAddressForm(request.POST)
+        if form.is_valid():
+            if Address.objects.filter(user=request.user).count()>= 2:
+                return render(request, 'account/add_address.html', {'form':form , 'error':'شما فقط مجاز به ثبت دو آدرس هستید '})
+            address = form.save(commit=False)
+            address.user = request.user
+            address.save()
+            next_page = request.GET.get('next')
+            if next_page:
+                return redirect(next_page)
+            # return redirect('/')
+
+        return render(request, 'account/add_address.html', {'form': form})
+    
+    def get(self, request):
+        form = AddAddressForm()
+        return render(request, 'account/add_address.html', {'form':form})
+
+
 
 def user_logout(request):
     logout(request)
